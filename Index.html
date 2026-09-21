@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PocketBoss</title>
+    <style>
+        body { font-family: sans-serif; background: #eef2f7; margin: 0; padding: 15px; }
+        .card { background: white; padding: 18px; border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); max-width: 420px; margin: auto; }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        h2 { margin: 0; color: #1e293b; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        
+        .lang-btn { background: #2563eb; color: white; border: none; padding: 6px 14px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        
+        .salary-box { background: #3b82f6; color: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .salary-box input { width: 110px; padding: 6px; border-radius: 6px; border: none; font-weight: bold; font-size: 15px; }
+        
+        .savings-box { background: #10b981; color: white; padding: 12px; border-radius: 10px; text-align: center; margin-bottom: 12px; }
+        .savings-title { font-size: 13px; opacity: 0.9; }
+        .savings-amount { font-size: 22px; font-weight: bold; margin: 3px 0; }
+        .savings-rate { font-size: 12px; background: rgba(255,255,255,0.25); padding: 2px 8px; border-radius: 10px; display: inline-block; }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .dash-card { padding: 10px; border-radius: 10px; text-align: center; color: white; }
+        .dash-today { background: #f97316; }
+        .dash-kadai { background: #ef4444; }
+
+        input, select, button { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        
+        button.add-btn { background: #1e293b; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 6px; }
+
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .action-btns { display: flex; gap: 10px; align-items: center; }
+        .download-btn { background: #0284c7; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: auto; margin: 0; }
+        .clear-btn { background: transparent; border: none; color: #ef4444; font-size: 12px; cursor: pointer; text-decoration: underline; width: auto; padding: 0; margin: 0; }
+
+        .history-tabs { display: flex; gap: 5px; margin: 8px 0; overflow-x: auto; }
+        .tab-btn { background: #e2e8f0; color: #475569; border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; width: auto; margin: 0; }
+        .tab-btn.active { background: #1e293b; color: white; font-weight: bold; }
+
+        ul { list-style: none; padding: 0; margin-top: 10px; max-height: 250px; overflow-y: auto; }
+        li { background: #f8fafc; padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; border-left: 5px solid #3b82f6; display: flex; justify-content: space-between; align-items: center; }
+        li.kadai-item { border-left-color: #ef4444; }
+        
+        .del-btn { background: #fee2e2; color: #dc2626; border: none; padding: 4px 8px; border-radius: 5px; font-weight: bold; cursor: pointer; width: auto; margin-left: 8px; }
+        .empty-msg { text-align: center; color: #94a3b8; font-size: 13px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="top-bar">
+        <h2 id="txtTitle">PocketBoss 💼</h2>
+        <button class="lang-btn" onclick="toggleLang()" id="btnLang">English</button>
+    </div>
+
+    <!-- சம்பளம் -->
+    <div class="salary-box">
+        <span id="txtSalary">மாதச் சம்பளம்: ₹</span>
+        <input type="number" id="inpSalary" placeholder="0" oninput="saveSalary()">
+    </div>
+
+    <!-- சேமிப்பு -->
+    <div class="savings-box">
+        <div class="savings-title" id="txtSavingsTitle">இந்த மாத சேமிப்பு</div>
+        <div class="savings-amount">₹<span id="valSavings">0</span></div>
+        <div class="savings-rate" id="valSavingsRate">சேமிப்பு: 0%</div>
+    </div>
+
+    <!-- இன்றைய செலவு & கடன் -->
+    <div class="dashboard">
+        <div class="dash-card dash-today">
+            <small id="txtTodayExp">இன்றைய செலவு</small>
+            <h3 style="margin: 5px 0;">₹<span id="valTodayExp">0</span></h3>
+        </div>
+        <div class="dash-card dash-kadai">
+            <small id="txtDebt">கடன் பாக்கி</small>
+            <h3 style="margin: 5px 0;">₹<span id="valDebt">0</span></h3>
+        </div>
+    </div>
+
+    <!-- என்ட்ரி ஃபார்ம் -->
+    <select id="selCategory"></select>
+    <input type="text" id="inpNote" placeholder="சின்ன குறிப்பு (விருப்பப்பட்டால்)">
+    <input type="number" id="inpAmount" placeholder="ரூபாய் (₹)">
+    <button class="add-btn" onclick="addExpense()" id="btnAdd">கணக்குல சேர்</button>
+
+    <!-- ஹிஸ்டரி மற்றும் டவுன்லோட் -->
+    <div class="history-header">
+        <h3 style="margin: 0; color: #1e293b;" id="txtHistory">வரலாறு (History)</h3>
+        <div class="action-btns">
+            <button class="download-btn" onclick="downloadExcel()" id="btnDownload">📥 டவுன்லோட்</button>
+            <button class="clear-btn" onclick="clearData()" id="btnClear">அனைத்தையும் அழி</button>
+        </div>
+    </div>
+
+    <div class="history-tabs">
+        <button class="tab-btn active" onclick="changeTab('all', this)" id="tabAll">எல்லாம்</button>
+        <button class="tab-btn" onclick="changeTab('today', this)" id="tabToday">இன்று</button>
+        <button class="tab-btn" onclick="changeTab('debt', this)" id="tabDebt">கடன் பாக்கி</button>
+    </div>
+
+    <ul id="listEntries"></ul>
+</div>
+
+<script>
+    const items = [
+        { id: "milk", ta: "🥛 பால் & தயிர்", en: "🥛 Milk & Curd", debt: false },
+        { id: "grocery", ta: "🛒 மளிகை சாமான்", en: "🛒 Groceries", debt: false },
+        { id: "veg", ta: "🥬 காய் & கனிகள்", en: "🥬 Veg & Fruits", debt: false },
+        { id: "water", ta: "💧 குடிநீர் கேன்", en: "💧 Drinking Water", debt: false },
+        { id: "bus", ta: "🚌 பஸ் டிக்கெட்", en: "🚌 Bus Ticket", debt: false },
+        { id: "train", ta: "🚆 ரயில் / மெட்ரோ", en: "🚆 Train / Metro", debt: false },
+        { id: "fuel", ta: "⛽ பெட்ரோல் / டீசல்", en: "⛽ Petrol / Fuel", debt: false },
+        { id: "bike", ta: "🛵 பைக் சர்வீஸ் / பஞ்சர்", en: "🛵 Bike Repair / Service", debt: false },
+        { id: "car", ta: "🚗 கார் சர்வீஸ் / வாஷ்", en: "🚗 Car Wash / Service", debt: false },
+        { id: "auto", ta: "🛺 ஆட்டோ / டாக்ஸி", en: "🛺 Auto / Cab", debt: false },
+        { id: "tea", ta: "☕ டீ / காபி / ஸ்நாக்ஸ்", en: "☕ Tea / Snacks", debt: false },
+        { id: "hotel", ta: "🍛 சாப்பாடு / ஹோட்டல்", en: "🍛 Hotel / Food", debt: false },
+        { id: "recharge", ta: "📱 மொபைல் ரீசார்ஜ் / WiFi", en: "📱 Recharge / Bills", debt: false },
+        { id: "eb", ta: "💡 கரண்ட் பில் (EB)", en: "💡 Current Bill (EB)", debt: false },
+        { id: "gas", ta: "🎛️ கேஸ் சிலிண்டர்", en: "🎛️ Gas Cylinder", debt: false },
+        { id: "med", ta: "🏥 மருத்துவம் / மாத்திரை", en: "🏥 Medicine / Hospital", debt: false },
+        { id: "debt", ta: "💳 கடை / கடன் பாக்கி", en: "💳 Pending Debt", debt: true },
+        { id: "other", ta: "📦 மற்ற செலவுகள்", en: "📦 Others", debt: false }
+    ];
+
+    let lang = localStorage.getItem('appLang') || 'ta';
+    let currentTab = 'all';
+
+    function getTodayString() {
+        let d = new Date();
+        return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+    }
+
+    function toggleLang() {
+        lang = (lang === 'ta') ? 'en' : 'ta';
+        localStorage.setItem('appLang', lang);
+        updateUI();
+    }
+
+    function updateUI() {
+        const isTa = (lang === 'ta');
+        document.getElementById('txtTitle').innerText = "PocketBoss 💼";
+        document.getElementById('btnLang').innerText = isTa ? "English" : "தமிழ்";
+        document.getElementById('txtSalary').innerText = isTa ? "மாதச் சம்பளம்: ₹" : "Monthly Salary: ₹";
+        document.getElementById('txtSavingsTitle').innerText = isTa ? "இந்த மாத சேமிப்பு" : "Monthly Savings";
+        document.getElementById('txtTodayExp').innerText = isTa ? "இன்றைய செலவு" : "Today's Expense";
+        document.getElementById('txtDebt').innerText = isTa ? "கடன் பாக்கி" : "Pending Debt";
+        document.getElementById('inpNote').placeholder = isTa ? "சின்ன குறிப்பு (விருப்பப்பட்டால்)" : "Note (optional)";
+        document.getElementById('inpAmount').placeholder = isTa ? "ரூபாய் (₹)" : "Amount (₹)";
+        document.getElementById('btnAdd').innerText = isTa ? "கணக்குல சேர்" : "Add Expense";
+        document.getElementById('txtHistory').innerText = isTa ? "வரலாறு" : "History";
+        document.getElementById('btnDownload').innerText = isTa ? "📥 எக்ஸெல்" : "📥 Export";
+        document.getElementById('btnClear').innerText = isTa ? "அனைத்தையும் அழி" : "Reset All";
+        document.getElementById('tabAll').innerText = isTa ? "எல்லாம்" : "All";
+        document.getElementById('tabToday').innerText = isTa ? "இன்று" : "Today";
+        document.getElementById('tabDebt').innerText = isTa ? "கடன் பாக்கி" : "Debts";
+
+        let select = document.getElementById('selCategory');
+        let selectedVal = select.value || "fuel";
+        select.innerHTML = '';
+        items.forEach(it => {
+            let opt = document.createElement('option');
+            opt.value = it.id;
+            opt.innerText = isTa ? it.ta : it.en;
+            if (it.id === selectedVal) opt.selected = true;
+            select.appendChild(opt);
+        });
+
+        renderList();
+    }
+
+    function saveSalary() {
+        let val = parseFloat(document.getElementById('inpSalary').value) || 0;
+        localStorage.setItem('userSalary', val);
+        renderList();
+    }
+
+    function addExpense() {
+        let catId = document.getElementById('selCategory').value;
+        let note = document.getElementById('inpNote').value.trim();
+        let amount = parseFloat(document.getElementById('inpAmount').value);
+
+        if (!amount || amount <= 0) {
+            alert(lang === 'ta' ? "சரியான தொகையை உள்ளிடவும்!" : "Please enter a valid amount!");
+            return;
+        }
+
+        let entries = JSON.parse(localStorage.getItem('userExpenses')) || [];
+        let d = new Date();
+        let time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        entries.unshift({
+            id: Date.now(),
+            catId: catId,
+            note: note,
+            amount: amount,
+            day: getTodayString(),
+            time: time
+        });
+
+        localStorage.setItem('userExpenses', JSON.stringify(entries));
+        document.getElementById('inpNote').value = '';
+        document.getElementById('inpAmount').value = '';
+        renderList();
+    }
+
+    function deleteItem(id) {
+        let entries = JSON.parse(localStorage.getItem('userExpenses')) || [];
+        entries = entries.filter(e => e.id !== id);
+        localStorage.setItem('userExpenses', JSON.stringify(entries));
+        renderList();
+    }
+
+    function clearData() {
+        let msg = (lang === 'ta') ? "முழு கணக்குகளையும் அழிக்கவா?" : "Clear all records?";
+        if (confirm(msg)) {
+            localStorage.removeItem('userExpenses');
+            renderList();
+        }
+    }
+
+    // Excel / CSV File Download Function
+    function downloadExcel() {
+        let entries = JSON.parse(localStorage.getItem('userExpenses')) || [];
+        if (entries.length === 0) {
+            alert(lang === 'ta' ? "பதிவிறக்க எந்த கணக்குகளும் இல்லை!" : "No records to export!");
+            return;
+        }
+
+        const isTa = (lang === 'ta');
+        let headers = isTa 
+            ? ["தேதி", "நேரம்", "வகை", "குறிப்பு", "தொகை (ரூ)", "நிலை"] 
+            : ["Date", "Time", "Category", "Note", "Amount (INR)", "Type"];
+        
+        let rows = [headers];
+
+        entries.forEach(e => {
+            let itemObj = items.find(i => i.id === e.catId) || items[items.length - 1];
+            let catName = isTa ? itemObj.ta : itemObj.en;
+            // Clean emoji if needed, or leave it
+            let typeStr = itemObj.debt ? (isTa ? "கடன் பாக்கி" : "Debt") : (isTa ? "செலவு" : "Expense");
+            let noteStr = e.note ? e.note.replace(/,/g, " ") : "-";
+
+            rows.push([e.day, e.time, catName, noteStr, e.amount, typeStr]);
+        });
+
+        // Convert to CSV string with UTF-8 BOM for Tamil support in Excel
+        let csvContent = "\uFEFF" + rows.map(r => r.join(",")).join("\n");
+        let blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        let url = URL.createObjectURL(blob);
+        
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = `PocketBoss_Expenses_${getTodayString()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function changeTab(tab, btn) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderList();
+    }
+
+    function renderList() {
+        let entries = JSON.parse(localStorage.getItem('userExpenses')) || [];
+        let salary = parseFloat(localStorage.getItem('userSalary')) || 0;
+        document.getElementById('inpSalary').value = salary ? salary : '';
+
+        let todayStr = getTodayString();
+        let todayTotal = 0;
+        let debtTotal = 0;
+        let expenseTotal = 0;
+
+        let list = document.getElementById('listEntries');
+        list.innerHTML = '';
+
+        entries.forEach(e => {
+            let itemObj = items.find(i => i.id === e.catId) || items[items.length - 1];
+            let isDebt = itemObj.debt;
+
+            if (isDebt) {
+                debtTotal += e.amount;
+            } else {
+                expenseTotal += e.amount;
+                if (e.day === todayStr) {
+                    todayTotal += e.amount;
+                }
+            }
+        });
+
+        document.getElementById('valTodayExp').innerText = todayTotal;
+        document.getElementById('valDebt').innerText = debtTotal;
+        let savings = salary - expenseTotal;
+        document.getElementById('valSavings').innerText = savings;
+
+        let rate = (salary > 0) ? Math.round((savings / salary) * 100) : 0;
+        document.getElementById('valSavingsRate').innerText = (lang === 'ta' ? "சேமிப்பு: " : "Savings: ") + rate + "%";
+
+        let filtered = entries.filter(e => {
+            let itemObj = items.find(i => i.id === e.catId) || items[items.length - 1];
+            if (currentTab === 'today') return e.day === todayStr;
+            if (currentTab === 'debt') return itemObj.debt;
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div class="empty-msg">${lang === 'ta' ? 'பதிவுகள் எதுவும் இல்லை!' : 'No entries yet!'}</div>`;
+            return;
+        }
+
+        filtered.forEach(e => {
+            let itemObj = items.find(i => i.id === e.catId) || items[items.length - 1];
+            let label = (lang === 'ta') ? itemObj.ta : itemObj.en;
+
+            let li = document.createElement('li');
+            if (itemObj.debt) li.className = 'kadai-item';
+
+            li.innerHTML = `
+                <div>
+                    <b>${label}</b> ${e.note ? `<br><small style="color:#64748b;">${e.note}</small>` : ''}
+                    <div style="font-size:11px; color:#94a3b8; margin-top:2px;">${e.time}</div>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <b>₹${e.amount}</b>
+                    <button class="del-btn" onclick="deleteItem(${e.id})">X</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
